@@ -53,6 +53,14 @@ To test the Django front-end, just navigate to one of the sites:
 - http://dev1.localhost/
 - http://dev2.localhost/
 
+To interact with the database:
+
+```
+docker exec -it microcosm-db-1 psql -U microcosm microcosm_development
+```
+
+Try `\dt *.*` to list tables, or `SELECT * FROM sites;` to list available sites on the Microcosm instance.
+
 ## Misc
 
 The postgres data is stored in a persistent docker volume. To delete that volume (and reset the database),
