@@ -26,6 +26,35 @@ services:
     networks:
       - micronet
 
+  localstack:
+    image: localstack/localstack:s3-latest
+    ports:
+      - 127.0.0.1:4566:4566
+    environment:
+      DEBUG: 1
+    networks:
+      - micronet
+    volumes:
+      - localstack-data:/var/lib/localstack
+      # - /var/run/docker.sock:/var/run/docker.sock
+
+  localstack-init:
+    image: amazon/aws-cli
+    depends_on:
+      - localstack
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    networks:
+      - micronet
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5 &&
+      aws --endpoint-url=http://localstack:4566 s3 mb s3://dev-object-store &&
+      echo 'S3 bucket created and initialized'
+      "
+
   # elastic-search:
   #   image: elasticsearch:7.13.1
   #   restart: always
@@ -41,6 +70,7 @@ services:
     depends_on:
       - db
       - memcached
+      - localstack
       # - elastic-search
     healthcheck:
       test: nc -z localhost 80
@@ -77,6 +107,7 @@ services:
     environment:
       API_SCHEME: http://
       MEMCACHE_HOST: memcached
+      NEW_RELIC_CONFIG_FILE: ./newrelic.ini
     ports:
       - 127.0.0.1:80:80
     networks:
@@ -94,4 +125,6 @@ networks:
 
 volumes:
   postgres-data:
+    driver: local
+  localstack-data:
     driver: local
