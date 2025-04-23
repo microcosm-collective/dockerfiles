@@ -93,6 +93,8 @@ services:
       watch:
         - action: rebuild
           path: ../microcosm
+          ignore:
+            - .git
 
   web:
     build:
@@ -119,6 +121,8 @@ services:
         - action: sync
           path: ../microweb
           target: /app
+          ignore:
+            - .git
 
 networks:
   micronet:
