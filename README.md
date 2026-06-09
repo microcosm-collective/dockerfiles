@@ -21,6 +21,8 @@ git clone https://github.com/microcosm-collective/microcosm.git
 git clone https://github.com/microcosm-collective/microweb.git
 ```
 
+The `sitegen` repo is also supported by the docker-compose file in this repo, but it's optional.
+
 ## 3. Start the service
 
 From the directory that contains all three repos, run the following:
@@ -34,6 +36,7 @@ You should see:
 - the base images being downloaded.
 - our images being built.
 - the database being bootstrapped.
+- the ministack S3 bucket being bootstrapped.
 
 It'll take a little while the first time, but subsequent runs should be a lot faster.
 
