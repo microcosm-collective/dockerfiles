@@ -26,22 +26,27 @@ services:
     networks:
       - micronet
 
-  localstack:
-    image: localstack/localstack:s3-latest
+  ministack:
+    image: ministackorg/ministack
     ports:
       - 127.0.0.1:4566:4566
     environment:
-      DEBUG: 1
+      MINISTACK_REGION: us-east-1
+      PERSIST_STATE: "1"
+      S3_PERSIST: "1"
+      STATE_DIR: /tmp/ministack-state
+      S3_DATA_DIR: /tmp/ministack-data/s3
     networks:
       - micronet
     volumes:
-      - localstack-data:/var/lib/localstack
+      - ministack-state:/tmp/ministack-state
+      - ministack-s3-data:/tmp/ministack-data/s3
       # - /var/run/docker.sock:/var/run/docker.sock
 
-  localstack-init:
+  ministack-init:
     image: amazon/aws-cli
     depends_on:
-      - localstack
+      - ministack
     environment:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
@@ -51,8 +56,9 @@ services:
     entrypoint: >
       /bin/sh -c "
       sleep 5 &&
-      aws --endpoint-url=http://localstack:4566 s3 mb s3://dev-object-store &&
-      echo 'S3 bucket created and initialized'
+      aws --endpoint-url=http://ministack:4566 s3api head-bucket --bucket dev-object-store >/dev/null 2>&1 ||
+      aws --endpoint-url=http://ministack:4566 s3 mb s3://dev-object-store &&
+      echo 'S3 bucket ready'
       "
 
   # elastic-search:
@@ -70,7 +76,7 @@ services:
     depends_on:
       - db
       - memcached
-      - localstack
+      - ministack
       # - elastic-search
     healthcheck:
       test: nc -z localhost 80
@@ -124,11 +130,28 @@ services:
           ignore:
             - .git
 
+  sitegen:
+    build:
+      context: ../sitegen
+      dockerfile: dockerfiles/dev.Dockerfile
+    restart: no
+    profiles:
+      - sitegen
+    environment:
+      API_SCHEME: http://
+      MEMCACHE_HOST: memcached
+    ports:
+      - 127.0.0.1:8090:80
+    networks:
+      - micronet
+
 networks:
   micronet:
 
 volumes:
   postgres-data:
     driver: local
-  localstack-data:
+  ministack-state:
+    driver: local
+  ministack-s3-data:
     driver: local
